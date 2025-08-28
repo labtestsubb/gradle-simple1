@@ -1,34 +1,104 @@
-apply plugin: 'java'
-apply plugin: 'maven-publish'
+plugins {
+    id 'org.springframework.boot' version '2.2.10.RELEASE'
+    id 'java'
+    id "org.sonarqube" version "2.7.1"
+    id "jacoco"
+}
 
-group = 'com.github.jitpack'
-version = '2.0'
+apply plugin: 'io.spring.dependency-management'
 
-sourceCompatibility = 1.8 // java 8
-targetCompatibility = 1.8
+group = 'com.xy’z
+version = '1.0.0'
+sourceCompatibility = '1.8.201'
+targetCompatibility = '1.8.201'
 
 repositories {
-  mavenCentral()
+    mavenLocal()
+    mavenCentral()
+    maven {
+        url "s3://repository.xyz.com.s3.ap-south-1.amazonaws.com"
+        authentication {
+            awsIm(AwsImAuthentication)
+        }
+    }
 }
 
 dependencies {
-  implementation 'com.google.guava:guava:29.0-jre'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.28'
+    implementation('org.springframework.boot:spring-boot-starter-actuator')
+    implementation('org.springframework.boot:spring-boot-starter-web')
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testCompile "org.mockito:mockito-core:2.8.9+"
+    testCompile group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.5'
+    testCompile group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.5'
+    compile 'io.micrometer:micrometer-core'
+    compile 'io.micrometer:micrometer-registry-prometheus'
+//    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-redis'
+    implementation "co.elastic.apm:apm-agent-api:1.9.0"
+    implementation group: 'io.springfox', name: 'springfox-swagger2', version: '2.8.0'
+
+    compile 'com.paytmmoney.pf.common:restTemplateUtil:v1.11-stg'
+//    implementation('com.paytmmoney.pf.referralmodule:referral-module:1.2.472-stg'){
+//        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-solr'
+//    }
+
+    implementation ('com.xyz.client:communication:1.2.6-stg')
+    annotationProcessor 'org.projectlombok:lombok:1.18.4'
+    compileOnly('org.projectlombok:lombok:1.18.4')
+    implementation 'com.paytmmoney.pf.common:web:v4.4'
+    compile (group: 'com.paytmmoney', name: 'pmclient', version: 'v195.2', changing: true) {force = true}
+    implementation (group: 'com.paytmmoney', name: 'pmcontract', version: 'v116-stg', changing: true) {force = true}
+
+    // For consuming Message from SQS
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk-sqs' , version: '1.11.678'
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk-sns' , version: '1.11.678'
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2' , version: '1.11.678'
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk-cloudformation' , version: '1.11.678'
+    implementation group: 'com.amazonaws', name: 'amazon-sqs-java-messaging-lib', version: '1.0.8'
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-aws', version: '1.2.4.RELEASE'
+    compile group: 'org.springframework.cloud', name: 'spring-cloud-aws-messaging', version: '1.2.4.RELEASE'
+
+
+    //to generate jwt token
+    implementation 'com.auth0:java-jwt:4.0.0'
+
+    implementation 'commons-codec:commons-codec:1.15'
+
+    implementation('org.modelmapper:modelmapper:2.3.0')
+    implementation group: 'org.springframework.kafka', name: 'spring-kafka'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation group: 'net.sf.supercsv', name: 'super-csv', version: '2.3.1'
+    compile group: 'org.apache.tomcat.embed', name: 'tomcat-embed-core'
+    compile group: 'org.springframework', name: 'spring-webmvc'
+    implementation group: 'org.json', name: 'json', version: '+'
+    compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.9.9'
+    compile 'org.apache.commons:commons-csv:1.10.0'
+    implementation 'com.slack.api:slack-api-client:1.15.0'
+    implementation group: 'org.springframework.data', name: 'spring-data-redis'
+    implementation 'redis.clients:jedis:3.9.0'
+    implementation 'org.hibernate:hibernate-envers'
+    compile 'com.paytmmoney.pf.common:pmMetrics:1.0.4'
 }
 
-java {
-	withSourcesJar()
-	withJavadocJar()
+sonarqube {
+    properties {
+
+        property "sonar.projectName", "pf-userprofile-referral-staging"
+        property "sonar.projectKey", "pf-ss”
+        property "sonar.ce.javaOpts", "-Xmx4096m -XX:MaxPermSize=1024m"
+        property "sonar.sourceEncoding", "UTF-8"
+    }
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-		from components.java
-        }
-    }
+bootJar {
+    version = '1.0.0'
+    mainClassName = 'com.paytmmoney.pf.referral.CustomerReferralApplication'
 }
 
-wrapper {
-    gradleVersion = "7.3.3"
-    distributionType = Wrapper.DistributionType.ALL
+bootRun {
+    environment SPRING_PROFILES_ACTIVE: environment.SPRING_PROFILES_ACTIVE ?: "local"
+}
+
+test {
+    environment SPRING_PROFILES_ACTIVE: environment.SPRING_PROFILES_ACTIVE ?: "test"
 }
