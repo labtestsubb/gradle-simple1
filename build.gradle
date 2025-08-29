@@ -59,7 +59,7 @@ dependencies {
     compile group: 'org.springframework.cloud', name: 'spring-cloud-aws-messaging', version: '1.2.4.RELEASE'
 
 
-    //to generate jwt token
+    //to generate jwt token -test
     implementation 'com.auth0:java-jwt:4.0.0'
 
     implementation 'commons-codec:commons-codec:1.15'
